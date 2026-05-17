@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loan Repayment Estimator</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body {
+      margin: 0; padding: 0;
+      background: #000000;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: #0a0a0a;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 40px rgba(102, 126, 234, 0.4);
+      max-width: 800px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+      min-height: 500px;
+      border: 2px solid #333;
+    }
+    
+    /* Slide Styles */
+    .slide {
+      display: none;
+      animation: fadeIn 0.4s ease;
+      padding: 20px;
+      height: 100%;
+    }
+    .slide.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    h1 { 
+      color: #667eea; 
+      font-size: 32px; 
+      margin-bottom: 15px; 
+      text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    }
+    h2 { 
+      color: #ffd700; 
+      margin-bottom: 20px; 
+      font-size: 24px;
+    }
+    p.slide-text { 
+      font-size: 18px; 
+      color: #ccc; 
+      margin-bottom: 30px; 
+      line-height: 1.6;
+    }
+    
+    /* Input Form */
+    .form-group { 
+      margin: 12px 0; 
+      text-align: left; 
+      max-width: 400px;
+      margin: 12px auto;
+    }
+    label { 
+      display: block; 
+      margin-bottom: 5px; 
+      font-weight: bold; 
+      color: #ffd700;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #111;
+      color: #fff;
+    }
+    input::placeholder { color: #666; }
+    
+    /* Buttons */
+    button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 14px 35px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 5px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+    }
+    .next-btn {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000;
+    }
+    .next-btn:hover {
+      box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+    }
+    
+    /* Results */
+    .result-item {
+      margin: 10px 0;
+      font-size: 16px;
+      text-align: left;
+      max-width: 500px;
+      margin: 10px auto;
+      padding: 8px;
+      background: #111;
+      border-radius: 6px;
+      border-left: 3px solid #667eea;
+    }
+    .result-item strong { color: #ffd700; }
+    .warning { color: #ff4444; font-weight: bold; margin-top: 10px; }
+    .success { color: #00ff88; font-weight: bold; margin-top: 10px; }
+    
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      background: #111;
+    }
+    table::-webkit-scrollbar { width: 8px; }
+    table::-webkit-scrollbar-thumb { background: #667eea; border-radius: 4px; }
+    
+    table th, table td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: right;
+    }
+    table th {
+      background: #667eea;
+      color: white;
+      text-align: center;
+      position: sticky;
+      top: 0;
+    }
+    table tr:nth-child(even) { background: #1a1a1a; }
+    table tr:hover { background: #222; }
+    
+    .save-btn {
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      color: #000;
+      font-weight: bold;
+    }
+    .save-btn:hover {
+      box-shadow: 0 5px 20px rgba(0, 255, 136, 0.5);
+    }
+    
+    /* Slide Indicators */
+    .slide-indicators {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #444;
+      cursor: pointer;
+      border: 2px solid #667eea;
+    }
+    .dot.active {
+      background: #667eea;
+      box-shadow: 0 0 10px #667eea;
+    }
+    
+    /* Navigation Buttons */
+    .nav-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- Slide 1: Welcome -->
+  <div class="slide active" id="slide1">
+    <h1>💰 Loan Repayment Estimator</h1>
+    <h2>Welcome!</h2>
+    <p class="slide-text">
+      Calculate compound interest, view your amortization schedule,<br>and save your results — all in one place.
+    </p>
+    <div class="slide-indicators">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="nav-buttons">
+      <button class="next-btn" style="visibility: hidden;">←</button>
+      <button class="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+  </div>
+
+  <!-- Slide 2: Input Form -->
+  <div class="slide" id="slide2">
+    <h1>Enter Loan Details</h1>
+    <p class="slide-text">Fill in your loan information below</p>
+    
+    <div class="form-group">
+      <label for="principal">Loan Amount (₹)</label>
+      <input type="number" id="principal" placeholder="e.g., 500000" />
+    </div>
+    <div class="form-group">
+      <label for="rate">Annual Interest Rate (%)</label>
+      <input type="number" id="rate" placeholder="e.g., 8.5" step="0.01" />
+    </div>
+    <div class="form-group">
+      <label for="tenure">Tenure (months)</label>
+      <input type="number" id="tenure" placeholder="e.g., 60" />
+    </div>
+    <div class="form-group">
+      <label for="compounding">Compounding Frequency</label>
+      <select id="compounding">
+        <option value="1">Yearly</option>
+        <option value="2">Half-Yearly</option>
+        <option value="3">Quarterly</option>
+        <option value="4" selected>Monthly</option>
+        <option value="5">Daily</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="income">Monthly Income (₹)</label>
+      <input type="number" id="income" placeholder="e.g., 50000" />
+    </div>
+    
+    <div class="slide-indicators">
+      <div class="dot" onclick="goToSlide(1)"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+      <button class="next-btn" onclick="calculateAndShowResult()">Calculate →</button>
+    </div>
+  </div>
+
+  <!-- Slide 3: Calculation Results -->
+  <div class="slide" id="slide3">
+    <h1>📊 Loan Summary</h1>
+    <h2>Your Calculation Results</h2>
+    
+    <div id="results-container">
+      <div class="result-item"><strong>Loan Amount:</strong> ₹<span id="res-principal"></span></div>
+      <div class="result-item"><strong>Interest Rate:</strong> <span id="res-rate"></span>% per year</div>
+      <div class="result-item"><strong>Tenure:</strong> <span id="res-tenure"></span> months (<span id="res-years"></span> years)</div>
+      <div class="result-item"><strong>Compounding:</strong> <span id="res-compounding"></span></div>
+      <div class="result-item"><strong>Total Interest (Compound):</strong> ₹<span id="res-interest"></span></div>
+      <div class="result-item"><strong>Total Repayment:</strong> ₹<span id="res-total"></span></div>
+      <div class="result-item"><strong>Monthly EMI:</strong> ₹<span id="res-emi"></span></div>
+      <div id="income-check"></div>
+    </div>
+    
+    <div class="slide-indicators">
+      <div class="dot" onclick="goToSlide(1)"></div>
+      <div class="dot" onclick="goToSlide(2)"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+      <button class="next-btn" onclick="nextSlide()">View Amortization →</button>
+    </div>
+  </div>
+
+  <!-- Slide 4: Amortization Intro -->
+  <div class="slide" id="slide4">
+    <h1>📋 Amortization Schedule</h1>
+    <h2>Your Monthly Breakdown</h2>
+    <p class="slide-text">
+      The next slide shows your complete amortization table,<br>
+      displaying how each EMI is split between interest and principal.
+    </p>
+    <p class="slide-text" style="color: #ffd700;">
+      ✅ View month-by-month balance<br>
+      ✅ See interest vs principal breakdown<br>
+      ✅ Download as CSV for record-keeping
+    </p>
+    
+    <div class="slide-indicators">
+      <div class="dot" onclick="goToSlide(1)"></div>
+      <div class="dot" onclick="goToSlide(2)"></div>
+      <div class="dot" onclick="goToSlide(3)"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+      <button class="next-btn" onclick="showAmortizationTable()">View Table →</button>
+    </div>
+  </div>
+
+  <!-- Slide 5: Amortization Table -->
+  <div class="slide" id="slide5">
+    <h1>📋 Amortization Schedule</h1>
+    <h2>Complete Monthly Breakdown</h2>
+    
+    <table id="amort-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>EMI</th>
+          <th>Interest</th>
+          <th>Principal</th>
+          <th>Remaining Balance</th>
+        </tr>
+      </thead>
+      <tbody id="amort-body"></tbody>
+    </table>
+    
+    <button class="save-btn" id="save-btn" onclick="saveAmortization()">💾 Save as CSV</button>
+    
+    <div class="slide-indicators">
+      <div class="dot" onclick="goToSlide(1)"></div>
+      <div class="dot" onclick="goToSlide(2)"></div>
+      <div class="dot" onclick="goToSlide(3)"></div>
+      <div class="dot" onclick="goToSlide(4)"></div>
+      <div class="dot active"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+      <button onclick="goToSlide(1)">🔄 Start Over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 5;
+  
+  function goToSlide(slideNum) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === slideNum - 1);
+    });
+    document.getElementById('slide' + slideNum).classList.add('active');
+    currentSlide = slideNum;
+  }
+  
+  function nextSlide() {
+    if (currentSlide < totalSlides) goToSlide(currentSlide + 1);
+  }
+  
+  function prevSlide() {
+    if (currentSlide > 1) goToSlide(currentSlide - 1);
+  }
+  
+  function calculateAndShowResult() {
+    const principal = parseFloat(document.getElementById('principal').value);
+    const rate = parseFloat(document.getElementById('rate').value);
+    const tenure_months = parseInt(document.getElementById('tenure').value);
+    const choice = parseInt(document.getElementById('compounding').value);
+    const monthly_income = parseInt(document.getElementById('income').value);
+
+    if (isNaN(principal) || isNaN(rate) || isNaN(tenure_months) || isNaN(monthly_income) ||
+        principal <= 0 || rate < 0 || rate > 50 || tenure_months <= 0 || monthly_income <= 0) {
+      alert("⚠️ Please enter valid positive numbers! Rate must be 0-50%.");
+      return;
+    }
+
+    let n, compoundingText;
+    if (choice === 1) { n = 1; compoundingText = "Yearly"; }
+    else if (choice === 2) { n = 2; compoundingText = "Half-Yearly"; }
+    else if (choice === 3) { n = 4; compoundingText = "Quarterly"; }
+    else if (choice === 4) { n = 12; compoundingText = "Monthly"; }
+    else if (choice === 5) { n = 365; compoundingText = "Daily"; }
+    else { n = 1; compoundingText = "Yearly"; }
+
+    const years = tenure_months / 12;
+    const final_amount = principal * Math.pow(1 + rate/n, n * years);
+    const total_interest = final_amount - principal;
+    const total_repayment = principal + total_interest;
+
+    const monthlyRate = rate / 100 / 12;
+    const monthly_emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure_months)) / 
+                        (Math.pow(1 + monthlyRate, tenure_months) - 1);
+
+    let incomeMessage = "";
+    if (monthly_emi > monthly_income * 0.5) {
+      incomeMessage = "<div class='result-item warning'>⚠️ EMI too high! Consider reducing loan or increasing tenure.</div>";
+    } else {
+      incomeMessage = "<div class='result-item success'>✅ EMI is manageable.</div>";
+    }
+
+    document.getElementById('res-principal').textContent = principal.toFixed(2);
+    document.getElementById('res-rate').textContent = rate;
+    document.getElementById('res-tenure').textContent = tenure_months;
+    document.getElementById('res-years').textContent = years.toFixed(2);
+    document.getElementById('res-compounding').textContent = compoundingText;
+    document.getElementById('res-interest').textContent = total_interest.toFixed(2);
+    document.getElementById('res-total').textContent = total_repayment.toFixed(2);
+    document.getElementById('res-emi').textContent = monthly_emi.toFixed(2);
+    document.getElementById('income-check').innerHTML = incomeMessage;
+
+    nextSlide();
+  }
+  
+  function showAmortizationTable() {
+    const principal = parseFloat(document.getElementById('principal').value);
+    const rate = parseFloat(document.getElementById('rate').value);
+    const tenure_months = parseInt(document.getElementById('tenure').value);
+    const monthlyRate = rate / 100 / 12;
+    
+    const monthly_emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure_months)) / 
+                        (Math.pow(1 + monthlyRate, tenure_months) - 1);
+
+    let startingBalance = principal;
+    const amortBody = document.getElementById('amort-body');
+    amortBody.innerHTML = '';
+    window.amortData = [];
+
+    for (let month = 1; month <= tenure_months; month++) {
+      const interest_payment = startingBalance * monthlyRate;
+      const principal_payment = monthly_emi - interest_payment;
+      startingBalance -= principal_payment;
+      if (startingBalance < 0) startingBalance = 0;
+
+      const row = {
+        month,
+        emi: monthly_emi.toFixed(2),
+        interest: interest_payment.toFixed(2),
+        principal: principal_payment.toFixed(2),
+        balance: startingBalance.toFixed(2)
+      };
+      window.amortData.push(row);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${month}</td>
+        <td>₹${row.emi}</td>
+        <td>₹${row.interest}</td>
+        <td>₹${row.principal}</td>
+        <td>₹${row.balance}</td>
+      `;
+      amortBody.appendChild(tr);
+    }
+
+    document.getElementById('amort-table').style.display = 'table';
+    document.getElementById('save-btn').style.display = 'inline-block';
+    nextSlide();
+  }
+  
+  function saveAmortization() {
+    if (!window.amortData || window.amortData.length === 0) {
+      alert("No data to save!");
+      return;
+    }
+
+    let csv = "Month,EMI,Interest,Principal,Remaining Balance\n";
+    window.amortData.forEach(row => {
+      csv += `${row.month},${row.emi},${row.interest},${row.principal},${row.balance}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'amortization_schedule.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+</script>
+
+</body>
+</html>
